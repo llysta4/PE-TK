@@ -1,0 +1,106 @@
+body {
+  font-family: "Poppins", sans-serif;
+  background: #f0f7ff;
+  padding: 20px;
+  color: #333;
+}
+
+h1 {
+  text-align: center;
+  color: #2a6fb1;
+  margin-bottom: 20px;
+}
+
+/* ——— BUTTON PRINT ——— */
+#printBtn {
+  padding: 10px 20px;
+  background: #2a6fb1;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+#printBtn:hover {
+  background: #1d5080;
+}
+
+/* Hide print button on print */
+@media print {
+  #printBtn {
+    display: none;
+  }
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* Card siswa */
+.student-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  border-left: 10px solid #b7dbff;
+}
+
+/* Identitas */
+.identity {
+  background: #e8f4ff;
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.identity label {
+  flex: 1 1 200px;
+  font-weight: 500;
+  color: #2a6fb1;
+}
+
+.identity input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 2px solid #b7dbff;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* Tabel */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  margin-top: 10px;
+}
+
+th {
+  background: #b7dbff;
+  color: #333;
+  padding: 8px;
+  font-weight: 600;
+}
+
+td {
+  border: 1px solid #d4eaff;
+  padding: 6px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+td.ket {
+  background: #f8fbff;
+  cursor: text;
+}
+
+tr:nth-child(even) {
+  background: #f8fbff;
+}
