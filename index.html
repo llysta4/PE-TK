@@ -1,39 +1,44 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Rapot TK - Data & Input</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rapot TK</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+  <!-- NAVBAR -->
   <nav class="navbar">
-    <button class="nav-btn active" onclick="showPage('dataPage', event)">Data Siswa</button>
-    <button class="nav-btn" onclick="showPage('inputPage', event)">Input Rapot</button>
+    <button class="nav-btn active" onclick="showPage('dataPage', this)">Data Siswa</button>
+    <button class="nav-btn" onclick="showPage('inputPage', this)">Input Rapot</button>
   </nav>
 
-  <!-- DATA PAGE -->
+  <!-- HALAMAN DATA -->
   <section id="dataPage" class="page active">
     <h2>Data Siswa</h2>
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Nama</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="dataTableBody">
-          <!-- diisi oleh JS -->
-        </tbody>
-      </table>
-    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nama</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Siswa 1</td><td><button onclick="editStudent(1)">Edit</button> <button onclick="printRapot(1)">Print</button></td></tr>
+        <tr><td>Siswa 2</td><td><button onclick="editStudent(2)">Edit</button> <button onclick="printRapot(2)">Print</button></td></tr>
+        <tr><td>Siswa 3</td><td><button onclick="editStudent(3)">Edit</button> <button onclick="printRapot(3)">Print</button></td></tr>
+        <tr><td>Siswa 4</td><td><button onclick="editStudent(4)">Edit</button> <button onclick="printRapot(4)">Print</button></td></tr>
+        <tr><td>Siswa 5</td><td><button onclick="editStudent(5)">Edit</button> <button onclick="printRapot(5)">Print</button></td></tr>
+      </tbody>
+    </table>
   </section>
 
-  <!-- INPUT PAGE -->
-  <section id="inputPage" class="page" style="display:none;">
+  <!-- HALAMAN INPUT -->
+  <section id="inputPage" class="page">
     <h2>Input Rapot</h2>
+
     <div id="formContainer"></div>
   </section>
 
