@@ -1,194 +1,43 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nilai Siswa</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rapot TK - Data & Input</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <h1>Data dan Nilai Siswa</h1>
+  <nav class="navbar">
+    <button class="nav-btn active" onclick="showPage('dataPage', event)">Data Siswa</button>
+    <button class="nav-btn" onclick="showPage('inputPage', event)">Input Rapot</button>
+  </nav>
 
-  <!-- TOMBOL PRINT -->
-  <button id="printBtn">🖨️ Print Halaman</button>
-
-  <div class="container">
-
-    <!-- TEMPLATE 5 SISWA -->
-    <!-- 1 -->
-    <div class="student-card">
-      <div class="identity">
-        <label>Nama: <input type="text"></label>
-        <label>Kelas: <input type="text"></label>
-        <label>NIS: <input type="text"></label>
-        <label>NISN: <input type="text"></label>
-      </div>
-
-      <table>
+  <!-- DATA PAGE -->
+  <section id="dataPage" class="page active">
+    <h2>Data Siswa</h2>
+    <div class="table-wrap">
+      <table class="data-table">
         <thead>
           <tr>
-            <th>Mata Pelajaran</th>
-            <th>A 💖</th>
-            <th>A- 🌸</th>
-            <th>B+ 🦋</th>
-            <th>B ⭐</th>
-            <th>B- 🍀</th>
-            <th>C+ 🌻</th>
-            <th>C 🐾</th>
-            <th>C- 💫</th>
-            <th>Keterangan</th>
+            <th>Nama</th>
+            <th>Aksi</th>
           </tr>
         </thead>
-        <tbody>
-          <tr><td>Matematika</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true" class="ket"></td></tr>
-          <tr><td>B. Indonesia</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true" class="ket"></td></tr>
-          <tr><td>B. Inggris</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true" class="ket"></td></tr>
-          <tr><td>IPA</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true" class="ket"></td></tr>
-          <tr><td>IPS</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true" class="ket"></td></tr>
+        <tbody id="dataTableBody">
+          <!-- diisi oleh JS -->
         </tbody>
       </table>
     </div>
+  </section>
 
-    <!-- 2 -->
-    <div class="student-card">
-      <div class="identity">
-        <label>Nama: <input type="text"></label>
-        <label>Kelas: <input type="text"></label>
-        <label>NIS: <input type="text"></label>
-        <label>NISN: <input type="text"></label>
-      </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Mata Pelajaran</th>
-            <th>A 💖</th>
-            <th>A- 🌸</th>
-            <th>B+ 🦋</th>
-            <th>B ⭐</th>
-            <th>B- 🍀</th>
-            <th>C+ 🌻</th>
-            <th>C 🐾</th>
-            <th>C- 💫</th>
-            <th>Keterangan</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td>Matematika</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-          <tr><td>B. Indonesia</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-          <tr><td>B. Inggris</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-          <tr><td>IPA</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-          <tr><td>IPS</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- 3 -->
-    <div class="student-card">
-      <div class="identity">
-        <label>Nama: <input type="text"></label>
-        <label>Kelas: <input type="text"></label>
-        <label>NIS: <input type="text"></label>
-        <label>NISN: <input type="text"></label>
-      </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Mata Pelajaran</th>
-            <th>A 💖</th>
-            <th>A- 🌸</th>
-            <th>B+ 🦋</th>
-            <th>B ⭐</th>
-            <th>B- 🍀</th>
-            <th>C+ 🌻</th>
-            <th>C 🐾</th>
-            <th>C- 💫</th>
-            <th>Keterangan</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td>Matematika</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-          <tr><td>B. Indonesia</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-          <tr><td>B. Inggris</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-          <tr><td>IPA</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-          <tr><td>IPS</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- 4 -->
-    <div class="student-card">
-      <div class="identity">
-        <label>Nama: <input type="text"></label>
-        <label>Kelas: <input type="text"></label>
-        <label>NIS: <input type="text"></label>
-        <label>NISN: <input type="text"></label>
-      </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Mata Pelajaran</th>
-            <th>A 💖</th>
-            <th>A- 🌸</th>
-            <th>B+ 🦋</th>
-            <th>B ⭐</th>
-            <th>B- 🍀</th>
-            <th>C+ 🌻</th>
-            <th>C 🐾</th>
-            <th>C- 💫</th>
-            <th>Keterangan</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td>Matematika</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-          <tr><td>B. Indonesia</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-          <tr><td>B. Inggris</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-          <tr><td>IPA</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-          <tr><td>IPS</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- 5 -->
-    <div class="student-card">
-      <div class="identity">
-        <label>Nama: <input type="text"></label>
-        <label>Kelas: <input type="text"></label>
-        <label>NIS: <input type="text"></label>
-        <label>NISN: <input type="text"></label>
-      </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Mata Pelajaran</th>
-            <th>A 💖</th>
-            <th>A- 🌸</th>
-            <th>B+ 🦋</th>
-            <th>B ⭐</th>
-            <th>B- 🍀</th>
-            <th>C+ 🌻</th>
-            <th>C 🐾</th>
-            <th>C- 💫</th>
-            <th>Keterangan</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td>Matematika</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-          <tr><td>B. Indonesia</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-          <tr><td>B. Inggris</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-          <tr><td>IPA</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-          <tr><td>IPS</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td contenteditable="true"></td></tr>
-        </tbody>
-      </table>
-    </div>
-
-  </div>
+  <!-- INPUT PAGE -->
+  <section id="inputPage" class="page" style="display:none;">
+    <h2>Input Rapot</h2>
+    <div id="formContainer"></div>
+  </section>
 
   <script src="script.js"></script>
-
 </body>
 </html>
+
