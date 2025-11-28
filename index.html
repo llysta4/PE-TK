@@ -3,35 +3,98 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Rapot TK — Input & Print A4</title>
+  <title>Rapot TK</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- NAVBAR (TIDAK DIUBAH) -->
   <header class="topbar">
     <div class="brand">📚 Rapot TK</div>
     <nav class="nav">
-      <button class="nav-btn active" onclick="showPage('dataPage', this)">Data</button>
-      <button class="nav-btn" onclick="showPage('inputPage', this)">Input</button>
+      <button class="nav-btn active" data-target="dataPage">Data</button>
+      <button class="nav-btn" data-target="inputPage">Input</button>
     </nav>
   </header>
 
-  <!-- DATA -->
+  <!-- DATA PAGE -->
   <main id="dataPage" class="page active">
     <h1>Daftar Siswa</h1>
-    <div class="table-wrap">
+    <div class="card">
       <table class="data-table">
-        <thead>
-          <tr><th>Nama</th><th>Aksi</th></tr>
-        </thead>
-        <tbody id="dataTableBody"></tbody>
+        <thead><tr><th>Nama</th><th>Aksi</th></tr></thead>
+        <tbody id="studentsList"></tbody>
       </table>
+      <div class="actions">
+        <button id="btnNew" class="btn primary">+ Baru</button>
+      </div>
     </div>
   </main>
 
-  <!-- INPUT -->
+  <!-- INPUT PAGE -->
   <main id="inputPage" class="page" style="display:none;">
     <h1>Input Rapot</h1>
-    <div id="formContainer"></div>
+
+    <section class="card">
+      <h2>Identitas</h2>
+      <div class="identitas">
+        <div class="col">
+          <label>Nama<br><input id="inp_nama" type="text"></label>
+          <label>Kelas<br><input id="inp_kelas" type="text"></label>
+          <label>NIS<br><input id="inp_nis" type="text"></label>
+          <label>NISN<br><input id="inp_nisn" type="text"></label>
+        </div>
+        <div class="col">
+          <label>Alamat<br><input id="inp_alamat" type="text"></label>
+          <label>Semester<br><input id="inp_semester" type="text"></label>
+          <label>Nama Sekolah<br><input id="inp_sekolah" type="text"></label>
+          <label>Fase<br><input id="inp_fase" type="text"></label>
+        </div>
+      </div>
+
+      <h2>Penilaian</h2>
+      <div class="table-wrap">
+        <table class="rapot-table" id="rapotTable">
+          <thead>
+            <tr>
+              <th>Kategori</th>
+              <th>Submateri</th>
+              <th>PE1</th><th>Em</th>
+              <th>PE2</th><th>Em</th>
+              <th>PE3</th><th>Em</th>
+            </tr>
+          </thead>
+          <tbody id="rapotBody"></tbody>
+          <tfoot>
+            <tr class="akumulasi-row">
+              <td colspan="8">
+                <div class="akumulasi-area">
+                  <label>AKUMULASI (rata-rata):</label>
+                  <input id="akumulasiInput" readonly />
+                  <span id="akumulasiEmoji" class="ak-emoji"></span>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="actions">
+        <button id="saveBtn" class="btn primary">Simpan</button>
+        <button id="backBtn" class="btn">Kembali</button>
+        <button id="printBtn" class="btn">Print Rapot</button>
+      </div>
+
+      <div class="signatures">
+        <div class="sign-block">
+          <div>Wali Kelas</div>
+          <div class="sign-line"></div>
+        </div>
+        <div class="sign-block">
+          <div>Orang Tua / Wali</div>
+          <div class="sign-line"></div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script src="script.js"></script>
