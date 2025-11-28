@@ -1,221 +1,363 @@
-/* CONFIG */
-const SLOT_GENDERS = ["c","p","p","c","c"]; // 1..5
-const MAPEL = [
-  "Kerohanian",
-  "Moral & Perilaku",
-  "Bahasa",
-  "Kognitif (Berpikir)",
-  "Motorik Halus",
-  "Motorik Kasar",
-  "Sosial & Emosional",
-  "Seni & Kreativitas"
-];
-const EMOJI = ["💖","🌸","🦋","⭐","🍀","🌻","🐾","💫"];
+/* CONFIG: grades, scores, emoji (SET A) */
+const GRADE_OPTIONS = ["A","A-","B+","B","B-","C+","C","C-"];
+const GRADE_SCORE = { "A":8,"A-":7,"B+":6,"B":5,"B-":4,"C+":3,"C":2,"C-":1 };
+const GRADE_EMOJI = { "A":"😄","A-":"🙂","B+":"😐","B":"😌","B-":"😕","C+":"😟","C":"😢","C-":"😭" };
 
-/* persistent storage per slot: localStorage key 'rapot_slotX' */
-function getSaved(slot){
-  try { return JSON.parse(localStorage.getItem("rapot_slot"+slot)) || null; }
-  catch(e){ return null; }
-}
-function setSaved(slot, data){
-  localStorage.setItem("rapot_slot"+slot, JSON.stringify(data));
+/* DEFAULT categories + 5 submateri each (editable in table) */
+const CATEGORIES = {
+  "Rohani":[
+    "Doa",
+    "Pujian",
+    "Hafalan ayat",
+    "Sikap ibadah",
+    "Kerajinan"
+  ],
+  "Motorik":[
+    "Motorik halus",
+    "Motorik kasar",
+    "Koordinasi tangan & mata",
+    "Ketelitian",
+    "Kerapian"
+  ],
+  "Bahasa":[
+    "Menyebut kata jelas",
+    "Mengenal huruf",
+    "Menceritakan kembali",
+    "Menjawab pertanyaan",
+    "Kosa kata"
+  ],
+  "Kreativitas":[
+    "Menggambar",
+    "Mewarnai rapi",
+    "Bernyanyi",
+    "Menari sederhana",
+    "Imajinasi bermain"
+  ],
+  "Sosial":[
+    "Berbagi",
+    "Kerja sama",
+    "Mengantre",
+    "Menghormati guru",
+    "Mengelola emosi"
+  ],
+  "Karakter":[
+    "Tanggung jawab",
+    "Kemandirian",
+    "Kesabaran",
+    "Disiplin",
+    "Sopan santun"
+  ]
+};
+
+/* STATE */
+let students = JSON.parse(localStorage.getItem("rapot_students") || "[]");
+let editIndex = null;
+
+/* DOM */
+const pages = { data: document.getElementById("dataPage"), input: document.getElementById("inputPage") };
+const studentsList = document.getElementById("studentsList");
+const rapotBody = document.getElementById("rapotBody");
+const akumulasiInput = document.getElementById("akumulasiInput");
+const akumulasiEmoji = document.getElementById("akumulasiEmoji");
+
+/* NAV (navbar unchanged) */
+document.querySelectorAll(".nav-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    const target = btn.dataset.target;
+    if(target === "dataPage") showData();
+    if(target === "inputPage") showInput();
+  });
+});
+
+/* buttons */
+document.getElementById("btnNew").addEventListener("click", newForm);
+document.getElementById("saveBtn").addEventListener("click", saveStudent);
+document.getElementById("backBtn").addEventListener("click", showData);
+document.getElementById("printBtn").addEventListener("click", printCurrent);
+
+/* INITIAL */
+buildRapotTable();
+calculateAkumulasi();
+renderStudentList();
+
+/* Build table rows from CATEGORIES */
+function buildRapotTable(){
+  rapotBody.innerHTML = "";
+  Object.keys(CATEGORIES).forEach(cat=>{
+    const subs = CATEGORIES[cat];
+    subs.forEach((sub, i)=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="category-cell" contenteditable="true">${i===0 ? cat : ""}</td>
+        <td class="sub-cell" contenteditable="true">${sub}</td>
+
+        <td><select class="pe-select pe1">${gradeOptions()}</select></td>
+        <td class="em-cell em1"></td>
+
+        <td><select class="pe-select pe2">${gradeOptions()}</select></td>
+        <td class="em-cell em2"></td>
+
+        <td><select class="pe-select pe3">${gradeOptions()}</select></td>
+        <td class="em-cell em3"></td>
+      `;
+      rapotBody.appendChild(tr);
+    });
+  });
+
+  // listeners for selects
+  rapotBody.querySelectorAll("select.pe-select").forEach(sel=>{
+    sel.addEventListener("change", onGradeChange);
+  });
+
+  // allow edit category/submateri (contenteditable) - no extra listeners needed
 }
 
-/* render data list (5 slots) */
-function renderDataList(){
-  const tbody = document.getElementById("dataTableBody");
-  tbody.innerHTML = "";
-  for(let i=1;i<=5;i++){
-    const saved = getSaved(i);
-    const name = saved && saved.nama ? escapeHtml(saved.nama) : `Siswa ${i}`;
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${name}</td>
-      <td>
-        <button class="action-btn btn-edit" onclick="editStudent(${i})">Edit</button>
-        <button class="action-btn btn-print" onclick="printRapot(${i})">Print</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
+/* helper: options html */
+function gradeOptions(){
+  return GRADE_OPTIONS.map(g=>`<option value="${g}">${g}</option>`).join("");
+}
+
+/* when grade changed */
+function onGradeChange(e){
+  const row = e.target.closest("tr");
+  const pe1 = row.querySelector(".pe1").value;
+  const pe2 = row.querySelector(".pe2").value;
+  const pe3 = row.querySelector(".pe3").value;
+  row.querySelector(".em1").textContent = GRADE_EMOJI[pe1] || "";
+  row.querySelector(".em2").textContent = GRADE_EMOJI[pe2] || "";
+  row.querySelector(".em3").textContent = GRADE_EMOJI[pe3] || "";
+  calculateAkumulasi();
+}
+
+/* calculate akumulasi (average numeric -> nearest grade) */
+function calculateAkumulasi(){
+  const rows = Array.from(document.querySelectorAll("#rapotBody tr"));
+  let total = 0, count = 0;
+  rows.forEach(r=>{
+    ["pe1","pe2","pe3"].forEach(cls=>{
+      const sel = r.querySelector(`select.${cls}`);
+      if(sel && sel.value){
+        const sc = GRADE_SCORE[sel.value] || 0;
+        total += sc; count++;
+      }
+    });
+  });
+  if(count === 0){
+    akumulasiInput.value = "";
+    akumulasiEmoji.textContent = "";
+    return;
   }
+  const avg = total / count;
+  let nearest = "C-", bestDiff = Infinity;
+  for(const [g,score] of Object.entries(GRADE_SCORE)){
+    const d = Math.abs(score - avg);
+    if(d < bestDiff){ bestDiff = d; nearest = g; }
+  }
+  akumulasiInput.value = `${nearest} (avg ${avg.toFixed(2)})`;
+  akumulasiEmoji.textContent = GRADE_EMOJI[nearest] || "";
 }
-renderDataList();
 
-/* page switch */
-function showPage(id, btn){
-  document.querySelectorAll(".page").forEach(p=>p.style.display="none");
-  document.getElementById(id).style.display="block";
-  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
-  if(btn) btn.classList.add("active");
+/* Save student entry */
+function saveStudent(){
+  const ident = {
+    nama: document.getElementById("inp_nama").value.trim(),
+    kelas: document.getElementById("inp_kelas").value.trim(),
+    nis: document.getElementById("inp_nis").value.trim(),
+    nisn: document.getElementById("inp_nisn").value.trim(),
+    alamat: document.getElementById("inp_alamat").value.trim(),
+    semester: document.getElementById("inp_semester").value.trim(),
+    sekolah: document.getElementById("inp_sekolah").value.trim(),
+    fase: document.getElementById("inp_fase").value.trim()
+  };
+  if(!ident.nama){ alert("Nama harus diisi"); return; }
+
+  const rows = Array.from(document.querySelectorAll("#rapotBody tr"));
+  const nilai = rows.map(r=>{
+    const kategori = findCategoryForRow(r);
+    return {
+      kategori,
+      submateri: r.querySelector(".sub-cell").textContent.trim(),
+      pe1: r.querySelector(".pe1").value,
+      em1: r.querySelector(".em1").textContent,
+      pe2: r.querySelector(".pe2").value,
+      em2: r.querySelector(".em2").textContent,
+      pe3: r.querySelector(".pe3").value,
+      em3: r.querySelector(".em3").textContent
+    };
+  });
+
+  const entry = { ident, nilai, akumulasi: akumulasiInput.value || "" };
+
+  if(editIndex === null){ students.push(entry); } else { students[editIndex] = entry; }
+
+  localStorage.setItem("rapot_students", JSON.stringify(students));
+  alert("Tersimpan.");
+  editIndex = null;
+  showData();
+  renderStudentList();
 }
 
-/* build form for a slot */
-function editStudent(slot){
-  showPage("inputPage", document.querySelectorAll(".nav-btn")[1]);
-  const gender = SLOT_GENDERS[slot-1];
-  const themeClass = gender==="p" ? "pink" : "blue";
+/* helper to find category for row (search upward) */
+function findCategoryForRow(row){
+  let tr = row;
+  while(tr){
+    const cat = tr.querySelector(".category-cell").textContent.trim();
+    if(cat) return cat;
+    tr = tr.previousElementSibling;
+  }
+  return "";
+}
 
-  const saved = getSaved(slot) || {};
+/* render student list */
+function renderStudentList(){
+  studentsList.innerHTML = "";
+  students.forEach((s, idx)=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${escapeHtml(s.ident.nama)}</td>
+      <td>
+        <button onclick="editStudent(${idx})">Edit</button>
+        <button onclick="printStudent(${idx})">Print</button>
+        <button onclick="deleteStudent(${idx})">Hapus</button>
+      </td>`;
+    studentsList.appendChild(tr);
+  });
+}
 
-  const container = document.getElementById("formContainer");
-  let html = `<div class="card ${themeClass}" id="rapotCard">
-    <div class="rapot-head">
-      <div><h3>RAPOT — Slot ${slot}</h3>
-        <div style="color:var(--muted);font-size:13px">Slot ${slot} • ${gender==="p"?"Perempuan":"Laki-laki"}</div>
-      </div>
-    </div>
+/* edit */
+function editStudent(i){
+  const s = students[i];
+  if(!s) return;
+  editIndex = i;
+  // fill ident
+  document.getElementById("inp_nama").value = s.ident.nama || "";
+  document.getElementById("inp_kelas").value = s.ident.kelas || "";
+  document.getElementById("inp_nis").value = s.ident.nis || "";
+  document.getElementById("inp_nisn").value = s.ident.nisn || "";
+  document.getElementById("inp_alamat").value = s.ident.alamat || "";
+  document.getElementById("inp_semester").value = s.ident.semester || "";
+  document.getElementById("inp_sekolah").value = s.ident.sekolah || "";
+  document.getElementById("inp_fase").value = s.ident.fase || "";
 
-    <div class="identity">
-      <label>Nama:<input id="inp_nama" value="${escapeHtmlAttr(saved.nama||'')}" /></label>
-      <label>Kelas:<input id="inp_kelas" value="${escapeHtmlAttr(saved.kelas||'')}" /></label>
-      <label>NIS:<input id="inp_nis" value="${escapeHtmlAttr(saved.nis||'')}" /></label>
-      <label>NISN:<input id="inp_nisn" value="${escapeHtmlAttr(saved.nisn||'')}" /></label>
-    </div>
+  buildRapotTable();
+  // fill values into rows
+  const rows = Array.from(document.querySelectorAll("#rapotBody tr"));
+  rows.forEach((r, idx)=>{
+    const d = s.nilai[idx] || {};
+    if(d.pe1) r.querySelector(".pe1").value = d.pe1;
+    if(d.pe2) r.querySelector(".pe2").value = d.pe2;
+    if(d.pe3) r.querySelector(".pe3").value = d.pe3;
+    r.querySelector(".em1").textContent = d.em1 || "";
+    r.querySelector(".em2").textContent = d.em2 || "";
+    r.querySelector(".em3").textContent = d.em3 || "";
+    // restore category/submateri if present
+    if(d.kategori){
+      const catCell = r.querySelector(".category-cell");
+      if(!catCell.textContent.trim()) catCell.textContent = d.kategori;
+    }
+    if(d.submateri) r.querySelector(".sub-cell").textContent = d.submateri;
+  });
+  calculateAkumulasi();
+  showInput();
+}
 
-    <table class="rapot-table" id="rapotTable">
-      <thead><tr>
-        <th>Mata Pelajaran</th>
-        <th>A</th><th>A-</th><th>B+</th><th>B</th><th>B-</th><th>C+</th><th>C</th><th>C-</th>
-        <th>Keterangan</th>
-      </tr></thead>
-      <tbody>`;
+/* delete student */
+function deleteStudent(i){
+  if(!confirm("Hapus data?")) return;
+  students.splice(i,1);
+  localStorage.setItem("rapot_students", JSON.stringify(students));
+  renderStudentList();
+}
 
-  MAPEL.forEach((m, idx)=>{
-    const rowSaved = saved.rapot && saved.rapot[idx] ? saved.rapot[idx] : null;
+/* print student by index */
+function printStudent(i){
+  const s = students[i];
+  if(!s) return alert("Tidak ditemukan");
+  const w = window.open("","_blank","width=900,height=1000");
+  const css = `<style>body{font-family:Arial;padding:18px}table{width:100%;border-collapse:collapse}th,td{border:2px solid #9fc8ff;padding:8px}th{background:#cfe7ff} .ident td{border:none;padding:4px;text-align:left}</style>`;
+  let html = `<html><head><title>Rapot ${escapeHtml(s.ident.nama)}</title>${css}</head><body>`;
+  html += `<h2 style="text-align:center">RAPOT - TK</h2>`;
+  html += `<table class="ident"><tr><td>Nama</td><td>: ${escapeHtml(s.ident.nama)}</td></tr>
+           <tr><td>Kelas</td><td>: ${escapeHtml(s.ident.kelas)}</td></tr>
+           <tr><td>NIS</td><td>: ${escapeHtml(s.ident.nis)}</td></tr>
+           <tr><td>NISN</td><td>: ${escapeHtml(s.ident.nisn)}</td></tr>
+           <tr><td>Alamat</td><td>: ${escapeHtml(s.ident.alamat)}</td></tr>
+           <tr><td>Semester</td><td>: ${escapeHtml(s.ident.semester)}</td></tr>
+           <tr><td>Sekolah</td><td>: ${escapeHtml(s.ident.sekolah)}</td></tr>
+           <tr><td>Fase</td><td>: ${escapeHtml(s.ident.fase)}</td></tr></table>`;
+  html += `<table><thead><tr><th>Kategori</th><th>Submateri</th><th>PE1</th><th>Em</th><th>PE2</th><th>Em</th><th>PE3</th><th>Em</th></tr></thead><tbody>`;
+  s.nilai.forEach(r=>{
     html += `<tr>
-      <td>${escapeHtml(m)}</td>
-      ${EMOJI.map((e,i)=>`<td class="grade" data-col="${i}">${ rowSaved && rowSaved.grades && rowSaved.grades[i] ? escapeHtml(rowSaved.grades[i]) : "" }</td>`).join("")}
-      <td class="ket"><textarea class="ket-text">${ rowSaved ? escapeHtml(rowSaved.ket||'') : '' }</textarea></td>
+      <td>${escapeHtml(r.kategori)}</td>
+      <td style="text-align:left">${escapeHtml(r.submateri)}</td>
+      <td>${escapeHtml(r.pe1)}</td><td>${escapeHtml(r.em1)}</td>
+      <td>${escapeHtml(r.pe2)}</td><td>${escapeHtml(r.em2)}</td>
+      <td>${escapeHtml(r.pe3)}</td><td>${escapeHtml(r.em3)}</td>
     </tr>`;
   });
-
-  html += `</tbody></table>
-
-    <div class="rapot-actions">
-      <button class="saveBtn" onclick="saveRapot(${slot})">SIMPAN</button>
-      <button class="printBtn" onclick="printRapot(${slot})">PRINT RAPOT</button>
-      <button class="back-btn" onclick="showPage('dataPage', document.querySelectorAll('.nav-btn')[0])">KEMBALI</button>
-    </div>
-  </div>`;
-
-  container.innerHTML = html;
-
-  attachGradeHandlers();
-  attachAutosize();
-}
-
-/* grade click handlers: set emoji, clear other grades in row */
-function attachGradeHandlers(){
-  document.querySelectorAll(".grade").forEach(td=>{
-    td.addEventListener("click", ()=> {
-      const tr = td.parentElement;
-      const idx = Number(td.dataset.col);
-      tr.querySelectorAll(".grade").forEach(c => { c.textContent=""; c.classList.remove("active"); });
-      td.textContent = EMOJI[idx] || "";
-      td.classList.add("active");
-    });
-  });
-}
-
-/* autosize textarea */
-function attachAutosize(){
-  document.querySelectorAll(".ket-text").forEach(a=>{
-    a.style.height = 'auto';
-    a.addEventListener("input", ()=> {
-      a.style.height = 'auto';
-      a.style.height = (a.scrollHeight) + 'px';
-    });
-    // init height
-    a.style.height = (a.scrollHeight) + 'px';
-  });
-}
-
-/* save rapot slot to localStorage */
-function saveRapot(slot){
-  const nama = document.getElementById("inp_nama").value.trim();
-  if(!nama){ alert("Nama harus diisi."); return; }
-  const kelas = document.getElementById("inp_kelas").value.trim();
-  const nis = document.getElementById("inp_nis").value.trim();
-  const nisn = document.getElementById("inp_nisn").value.trim();
-
-  const rows = Array.from(document.querySelectorAll("#rapotTable tbody tr"));
-  const rapot = rows.map(r=>{
-    const grades = Array.from(r.querySelectorAll(".grade")).map(g=>g.textContent || "");
-    const ket = r.querySelector(".ket textarea").value || "";
-    return { mapel: r.children[0].textContent, grades, ket };
-  });
-
-  const data = { nama, kelas, nis, nisn, rapot };
-  setSaved(slot, data);
-  renderDataList();
-  alert("Rapot tersimpan untuk slot "+slot+".");
-}
-
-/* print rapot A4 rapi (uses saved data) */
-function printRapot(slot){
-  const data = getSaved(slot);
-  if(!data){ alert("Rapot belum disimpan untuk siswa ini."); return; }
-
-  const gender = SLOT_GENDERS[slot-1];
-  const color = gender==="p" ? {card:"#fff0f6",accent:"#ffb6d9"} : {card:"#eaf6ff",accent:"#9fd6ff"};
-
-  const w = window.open("","_blank","width=900,height=1000");
-  const css = `
-    <style>
-      @page{ size:A4; margin:18mm; }
-      body{ font-family: Arial; -webkit-print-color-adjust:exact; print-color-adjust:exact; margin:0; padding:18px; background:white;}
-      .card{ padding:18px; border-radius:8px; background:${color.card}; border-left:12px solid ${color.accent}; }
-      h1{ margin:0 0 8px 0; font-size:20px; text-align:center; }
-      .meta{ margin-top:8px; display:flex; gap:20px; flex-wrap:wrap; }
-      .meta p{ margin:4px 0; font-weight:700; }
-      table{ width:100%; border-collapse:collapse; margin-top:14px; }
-      th, td{ border:2px solid ${color.accent}; padding:8px; vertical-align:top; }
-      th{ background:${color.accent}; font-weight:800; }
-      td.ket{ width:360px; }
-      .sign{ margin-top:28px; display:flex; justify-content:space-between; gap:40px; }
-      .sign .box{ width:40%; text-align:center; }
-      .small{ font-size:12px; color:#333; margin-top:6px; }
-    </style>
-  `;
-
-  let html = `<html><head><title>Rapot ${escapeHtml(data.nama)}</title>${css}</head><body>`;
-  html += `<div class="card"><h1>RAPOT - Taman Kanak-kanak</h1>`;
-  html += `<div class="meta">
-    <p>Nama: ${escapeHtml(data.nama)}</p>
-    <p>Kelas: ${escapeHtml(data.kelas)}</p>
-    <p>NIS: ${escapeHtml(data.nis)}</p>
-    <p>NISN: ${escapeHtml(data.nisn)}</p>
-  </div>`;
-
-  html += `<table><thead><tr>
-    <th>Mata Pelajaran</th>
-    <th>A</th><th>A-</th><th>B+</th><th>B</th><th>B-</th><th>C+</th><th>C</th><th>C-</th>
-    <th>Keterangan</th>
-  </tr></thead><tbody>`;
-
-  data.rapot.forEach(r=>{
-    html += `<tr><td>${escapeHtml(r.mapel)}</td>`;
-    r.grades.forEach(g => html += `<td>${escapeHtml(g)}</td>`);
-    html += `<td class="ket">${escapeHtml(r.ket)}</td></tr>`;
-  });
-
   html += `</tbody></table>`;
-
-  html += `<div class="sign">
-    <div class="box">Guru Kelas<br><div class="small">(tanda tangan & nama)</div></div>
-    <div class="box">Orang Tua/Wali<br><div class="small">(tanda tangan & nama)</div></div>
-  </div>`;
-
-  html += `</div></body></html>`;
-
-  w.document.write(html);
-  w.document.close();
+  html += `<div style="display:flex;justify-content:space-between;margin-top:30px"><div style="width:45%;text-align:center">Wali Kelas<br><br>_______________</div><div style="width:45%;text-align:center">Orang Tua<br><br>_______________</div></div>`;
+  html += `</body></html>`;
+  w.document.write(html); w.document.close();
   setTimeout(()=>{ w.print(); w.close(); },300);
 }
 
-/* helper escape */
-function escapeHtml(s){
-  if(!s) return "";
-  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+/* print current form */
+function printCurrent(){
+  printCurrentForm();
 }
-function escapeHtmlAttr(s){ return escapeHtml(s).replaceAll("'", "&#39;"); }
+function printCurrentForm(){
+  const ident = {
+    nama: document.getElementById("inp_nama").value.trim(),
+    kelas: document.getElementById("inp_kelas").value.trim(),
+    nis: document.getElementById("inp_nis").value.trim(),
+    nisn: document.getElementById("inp_nisn").value.trim(),
+    alamat: document.getElementById("inp_alamat").value.trim(),
+    semester: document.getElementById("inp_semester").value.trim(),
+    sekolah: document.getElementById("inp_sekolah").value.trim(),
+    fase: document.getElementById("inp_fase").value.trim()
+  };
+  const rows = Array.from(document.querySelectorAll("#rapotBody tr"));
+  const tableRows = rows.map(r=>{
+    const kategori = findCategoryForRow(r);
+    const sub = r.querySelector(".sub-cell").textContent;
+    const pe1 = r.querySelector(".pe1").value; const em1 = r.querySelector(".em1").textContent;
+    const pe2 = r.querySelector(".pe2").value; const em2 = r.querySelector(".em2").textContent;
+    const pe3 = r.querySelector(".pe3").value; const em3 = r.querySelector(".em3").textContent;
+    return `<tr><td>${escapeHtml(kategori)}</td><td style="text-align:left">${escapeHtml(sub)}</td>
+      <td>${escapeHtml(pe1)}</td><td>${escapeHtml(em1)}</td><td>${escapeHtml(pe2)}</td><td>${escapeHtml(em2)}</td>
+      <td>${escapeHtml(pe3)}</td><td>${escapeHtml(em3)}</td></tr>`;
+  }).join("");
+  const w = window.open("","_blank","width=900,height=1000");
+  const css = `<style>body{font-family:Arial;padding:18px}table{width:100%;border-collapse:collapse}th,td{border:2px solid #9fc8ff;padding:8px}th{background:#cfe7ff}</style>`;
+  let html = `<html><head><title>Print Rapot</title>${css}</head><body>`;
+  html += `<h2 style="text-align:center">RAPOT - TK</h2>`;
+  html += `<table><tr><td>Nama</td><td>${escapeHtml(ident.nama)}</td></tr><tr><td>Kelas</td><td>${escapeHtml(ident.kelas)}</td></tr></table>`;
+  html += `<table><thead><tr><th>Kategori</th><th>Submateri</th><th>PE1</th><th>Em</th><th>PE2</th><th>Em</th><th>PE3</th><th>Em</th></tr></thead><tbody>${tableRows}</tbody></table>`;
+  html += `<div style="display:flex;justify-content:space-between;margin-top:30px"><div style="width:45%;text-align:center">Wali Kelas<br><br>_______________</div><div style="width:45%;text-align:center">Orang Tua<br><br>_______________</div></div>`;
+  html += `</body></html>`;
+  w.document.write(html); w.document.close();
+  setTimeout(()=>{ w.print(); w.close(); },300);
+}
+
+/* helpers */
+function escapeHtml(s){ if(!s) return ""; return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;"); }
+
+/* new form */
+function newForm(){
+  editIndex = null;
+  ["inp_nama","inp_kelas","inp_nis","inp_nisn","inp_alamat","inp_semester","inp_sekolah","inp_fase"].forEach(id=>{
+    document.getElementById(id).value = "";
+  });
+  buildRapotTable();
+  calculateAkumulasi();
+  showInput();
+}
+
+/* show data/input */
+function showData(){ pages.data.style.display=""; pages.input.style.display="none"; renderStudentList(); }
+function showInput(){ pages.data.style.display="none"; pages.input.style.display=""; }
+
+/* initial render */
+renderStudentList();
